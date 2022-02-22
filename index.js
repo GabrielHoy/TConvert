@@ -4,9 +4,7 @@
 */
 const fs = require("fs");
 const Eris = require("eris");
-const axios = require("axios");
 const request = require('request');
-const { send } = require("process");
 const ffmpeg = require('ffmpeg');
 const path = require('path');
 
@@ -22,7 +20,6 @@ bot.on("error", (err) => {
 	console.log(err);
 });
 
-//self explanatory, returns a promise that resolves after a timeout for sleeping in node
 function sleep(ms) {
 	return new Promise((resolve) => {
 		setTimeout(resolve, ms);
@@ -38,9 +35,7 @@ let supportedContentTypes = {
 function ReplaceAnyMedia(msg) {
 	for (let i = 0; i < msg.attachments.length; i++) {
 		for (let [contentType,_] of Object.entries(supportedContentTypes)) {
-			//console.log("contentType: " + contentType + " : " + msg.attachments[i].content_type);
 			if (msg.attachments[i].content_type == contentType) {
-				//console.log("file of type");
 				let file = fs.createWriteStream(msg.attachments[i].filename);
 
 				const sendReq = request.get(msg.attachments[i].url);
@@ -59,37 +54,23 @@ function ReplaceAnyMedia(msg) {
 				});
 				try {
 					sendReq.on("complete", () => {
-						//console.log("finished downloading");
 
 						try { 
 							new ffmpeg(file.path, (err,video) => {
 								if (!err) {
-									//console.log("Ready to be processed");
 									video.setVideoFormat("mp4").save(path.parse(file.path).name + ".mp4", (err,ffmpegfile) => {
-										//console.log("running");
 										if (!err) {
-											//console.log("File: " + ffmpegfile);
 											fs.readFile(ffmpegfile, null, (err,data) => {
 												if (err) {
 													console.log("error reading file");
 													return;
 												}
-												//console.log("data: " + data);
 												bot.createMessage(msg.channel.id, `Hey <@${msg.author.id}>,\nIt seems like you posted a file that moderators can't look at properly, so we've converted it to a better format for you automatically:`,  {name: ffmpegfile, file: data}).then(() => {
 													msg.delete();
 												});
 												fs.unlink(file.path, () => {});
 												fs.unlink(ffmpegfile, () => {});
 											});
-
-/*
-											
-											fs.openSync(ffmpegfile, "r", (err,fd) => {console.log("open");
-											console.log(fd);
-											bot.createMessage(msg.channel.id, 'a',  {name: 'test.avi', file: fd.toString()});
-										});*/
-											//bot.createMessage(msg.channel.id, 'Test');
-											
 										} else {
 											console.log("Error:");
 											console.log(err);
@@ -127,15 +108,7 @@ function ReplaceAnyMedia(msg) {
 bot.on("messageCreate", async (msg) => {
 	if (msg.author.id == bot.user.id) return;
 		try {
-			let isInfringeReason = await ReplaceAnyMedia(msg);
-			if (isInfringeReason) {
-				msg.delete();
-				bot.createMessage(msg.channel.id, `<@${msg.author.id}>\nYour message has been deleted for: \n${isInfringeReason}`).then(msg => {
-					setTimeout(() => {
-						msg.delete();
-					}, 10000);
-				});
-			}
+			ReplaceAnyMedia(msg);
 		} catch (err) {
 			console.log(err);
 		}
