@@ -65,7 +65,7 @@ function ReplaceAnyMedia(msg) {
 													console.log("error reading file");
 													return;
 												}
-												bot.createMessage(msg.channel.id, `\`\`\`${msg.content}\`\`\` Hey <@${msg.author.id}>,\nIt seems like you posted a file that moderators can't look at properly, so we've converted it to a better format for you automatically:`,  {name: ffmpegfile, file: data}).then(() => {
+												bot.createMessage(msg.channel.id, `Hey <@${msg.author.id}>,\nIt seems like you posted a file that moderators can't look at properly, so we've converted it to a better format for you automatically:`,  {name: ffmpegfile, file: data}).then(() => {
 													msg.delete();
 												});
 												fs.unlink(file.path, () => {});
